@@ -2,8 +2,27 @@ import { Container } from "./styles";
 import incomeImg from "../../assets/income.svg";
 import outcomeImg from "../../assets/outcome.svg";
 import totalImg from "../../assets/total.svg";
+import { depositTypeEnum } from "../NewTransactionModal";
+import { useTransactions } from "../../hooks/useTransactions";
 
 export function Summary() {
+  const { transactions } = useTransactions();
+  const summary = transactions.reduce(
+    (acc, transaction) => {
+      if (transaction.type === depositTypeEnum.DEPOSIT_TYPE) {
+        acc.deposit += transaction.value;
+      } else {
+        acc.withdraw += transaction.value;
+      }
+      acc.total = acc.deposit - acc.withdraw;
+      return acc;
+    },
+    {
+      total: 0,
+      deposit: 0,
+      withdraw: 0,
+    }
+  );
   return (
     <Container>
       <div>
@@ -11,21 +30,36 @@ export function Summary() {
           <p>Entradas</p>
           <img src={incomeImg} alt="Entradas" />
         </header>
-        <strong>R$ 1000,00</strong>
+        <strong>
+          {new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(summary.deposit)}
+        </strong>
       </div>
       <div>
         <header>
           <p>Saídas</p>
           <img src={outcomeImg} alt="Saídas" />
         </header>
-        <strong>R$ 500,00</strong>
+        <strong>
+          {new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(summary.withdraw)}
+        </strong>
       </div>
       <div>
         <header>
           <p>Total</p>
           <img src={totalImg} alt="Total" />
         </header>
-        <strong>R$ 500,00</strong>
+        <strong>
+          {new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(summary.total)}
+        </strong>
       </div>
     </Container>
   );

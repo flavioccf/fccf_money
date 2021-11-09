@@ -1,11 +1,11 @@
 import Modal from "react-modal";
-import incomeImg from '../../assets/income.svg';
-import outcomeImg from '../../assets/outcome.svg';
-import closeImg from '../../assets/close.svg';
+import incomeImg from "../../assets/income.svg";
+import outcomeImg from "../../assets/outcome.svg";
+import closeImg from "../../assets/close.svg";
 import { Container, RadioBox, TransactionTypeContainer } from "./styles";
 import { FormEvent, useState } from "react";
-import { api } from "../../services/api";
-Modal.setAppElement('#root')
+import { useTransactions } from "../../hooks/useTransactions";
+Modal.setAppElement("#root");
 
 interface NewTransactionModalProps {
   isOpen: boolean;
@@ -13,42 +13,73 @@ interface NewTransactionModalProps {
 }
 
 export enum depositTypeEnum {
-  DEPOSIT_TYPE = 'deposit',
-  WITHDRAW_TYPE = 'withdraw'
+  DEPOSIT_TYPE = "deposit",
+  WITHDRAW_TYPE = "withdraw",
 }
 
-export function NewTransactionModal({isOpen, onRequestClose}: NewTransactionModalProps) {
-  const [type, setType] = useState(depositTypeEnum.DEPOSIT_TYPE)
-  const [title, setTitle] = useState('')
-  const [value, setValue] = useState(0)
-  const [category, setCategory] = useState('')
-  const handleCreateNewTransaction = (event: FormEvent) => {
-    event.preventDefault()
-    const data = {
+export function NewTransactionModal({
+  isOpen,
+  onRequestClose,
+}: NewTransactionModalProps) {
+  const { createTransaction } = useTransactions();
+
+  const [type, setType] = useState(depositTypeEnum.DEPOSIT_TYPE);
+  const [title, setTitle] = useState("");
+  const [value, setValue] = useState(0);
+  const [category, setCategory] = useState("");
+  const createdAt = Date.now();
+
+  const resetForm = () => {
+    setTitle("");
+    setType(depositTypeEnum.DEPOSIT_TYPE);
+    setValue(0);
+    setCategory("");
+  };
+  const handleCreateNewTransaction = async (event: FormEvent) => {
+    event.preventDefault();
+    const transaction = {
       title,
       value,
       type,
-      category
-    }
-    api.post('/transactions', data)
-  }
+      category,
+      createdAt,
+    };
+    try {
+      await createTransaction(transaction);
+      onRequestClose();
+      resetForm();
+    } catch (error) {}
+  };
 
   return (
     <Modal
-        isOpen={isOpen}
-        // onAfterOpen={afterOpenModal}
-        onRequestClose={onRequestClose}
-        overlayClassName="react-modal-overlay"
-        className="react-modal-content"
-        contentLabel="Example Modal"
+      isOpen={isOpen}
+      // onAfterOpen={afterOpenModal}
+      onRequestClose={onRequestClose}
+      overlayClassName="react-modal-overlay"
+      className="react-modal-content"
+      contentLabel="Example Modal"
+    >
+      <button
+        className="react-modal-close"
+        type="button"
+        onClick={onRequestClose}
       >
-        <button className="react-modal-close" type="button" onClick={onRequestClose}>
-          <img src={closeImg} alt="Close"/>
-        </button>
-        <Container onSubmit={handleCreateNewTransaction}>
+        <img src={closeImg} alt="Close" />
+      </button>
+      <Container onSubmit={handleCreateNewTransaction}>
         <h2>Cadastrar Transação</h2>
-        <input placeholder="Titulo" onChange={(e) => setTitle(e.target.value)} value={title}/>
-        <input type="number" placeholder="Valor" onChange={(e) => setValue(Number(e.target.value))} value={value}/>
+        <input
+          placeholder="Titulo"
+          onChange={(e) => setTitle(e.target.value)}
+          value={title}
+        />
+        <input
+          type="number"
+          placeholder="Valor"
+          onChange={(e) => setValue(Number(e.target.value))}
+          value={value}
+        />
 
         <TransactionTypeContainer>
           <RadioBox
@@ -61,7 +92,7 @@ export function NewTransactionModal({isOpen, onRequestClose}: NewTransactionModa
             <span>Entrada</span>
           </RadioBox>
           <RadioBox
-          onClick={() => setType(depositTypeEnum.WITHDRAW_TYPE)}
+            onClick={() => setType(depositTypeEnum.WITHDRAW_TYPE)}
             type="button"
             isActive={type === depositTypeEnum.WITHDRAW_TYPE}
             activeColor="red"
@@ -71,9 +102,13 @@ export function NewTransactionModal({isOpen, onRequestClose}: NewTransactionModa
           </RadioBox>
         </TransactionTypeContainer>
 
-        <input placeholder="Categoria" onChange={(e) => setCategory(e.target.value)} value={category}/>
+        <input
+          placeholder="Categoria"
+          onChange={(e) => setCategory(e.target.value)}
+          value={category}
+        />
         <button type="submit">Cadastrar</button>
-        </Container>
-      </Modal>
-  )
+      </Container>
+    </Modal>
+  );
 }
